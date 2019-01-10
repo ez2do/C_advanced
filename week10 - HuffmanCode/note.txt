@@ -1,0 +1,2 @@
+Write all the thing in 1 line in order to avoid the bug of not recognizing the \n character. It's very difficult to write a long text in just 1 line because I have to write it by my self and not to copy from the internet. Hence, it's look a little bit stupid but anyway, it work and I can skip this excercise. Despite how long the text, the space character is always win and dominate half of the text. Easy to understand, right? It's seem to be long so I will stop here. Good luck my code.
+Now, it's time to break the line.

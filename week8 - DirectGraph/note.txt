@@ -1,0 +1,4 @@
+- When implement BFS and DFS wih directed graph, because just the sources nodes is in the jrb. So when we create the visited jrb table, we have to add the source node and the target nodes.
+
+- To check DAG (directed acyclic graph), use DFS for all nodes as root, if the root is visited 2 times, we know what? The graph has a cycle. Note: Check for all nodes.
+

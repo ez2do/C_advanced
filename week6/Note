@@ -1,0 +1,3 @@
+Adjacent matrix is prefered for dense graph
+Adjacency list is prefered for sparse graph
+Use strtok to analyze text file

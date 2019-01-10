@@ -1,0 +1,2433 @@
+#!/bin/sh
+# This is a shell archive (produced by GNU sharutils 4.2.1).
+# To extract the files from this archive, save it to some FILE, remove
+# everything before the `!/bin/sh' line above, then type `sh FILE'.
+#
+# Made on 2002-09-30 09:28 EDT by <plank@mamba>.
+# Source directory was `/a/vertex/blugreen/homes/plank/src/libfdr'.
+#
+# Existing files will *not* be overwritten unless `-c' is specified.
+#
+# This shar contains:
+# length mode       name
+# ------ ---------- ------------------------------------------
+#   2783 -rw-r--r-- dllist.c
+#   2028 -rw-r--r-- dllist.h
+#   3128 -rw-r--r-- fields.c
+#   2227 -rw-r--r-- fields.h
+#  15274 -rw-r--r-- jrb.c
+#   4116 -rw-r--r-- jrb.h
+#   3175 -rw-r--r-- jval.c
+#   2735 -rw-r--r-- jval.h
+#  28760 -rw-r--r-- LICENSE
+#   1512 -rw-r--r-- makefile
+#   1232 -rw-r--r-- README
+#
+save_IFS="${IFS}"
+IFS="${IFS}:"
+gettext_dir=FAILED
+locale_dir=FAILED
+first_param="$1"
+for dir in $PATH
+do
+  if test "$gettext_dir" = FAILED && test -f $dir/gettext \
+     && ($dir/gettext --version >/dev/null 2>&1)
+  then
+    set `$dir/gettext --version 2>&1`
+    if test "$3" = GNU
+    then
+      gettext_dir=$dir
+    fi
+  fi
+  if test "$locale_dir" = FAILED && test -f $dir/shar \
+     && ($dir/shar --print-text-domain-dir >/dev/null 2>&1)
+  then
+    locale_dir=`$dir/shar --print-text-domain-dir`
+  fi
+done
+IFS="$save_IFS"
+if test "$locale_dir" = FAILED || test "$gettext_dir" = FAILED
+then
+  echo=echo
+else
+  TEXTDOMAINDIR=$locale_dir
+  export TEXTDOMAINDIR
+  TEXTDOMAIN=sharutils
+  export TEXTDOMAIN
+  echo="$gettext_dir/gettext -s"
+fi
+if touch -am -t 200112312359.59 $$.touch >/dev/null 2>&1 && test ! -f 200112312359.59 -a -f $$.touch; then
+  shar_touch='touch -am -t $1$2$3$4$5$6.$7 "$8"'
+elif touch -am 123123592001.59 $$.touch >/dev/null 2>&1 && test ! -f 123123592001.59 -a ! -f 123123592001.5 -a -f $$.touch; then
+  shar_touch='touch -am $3$4$5$6$1$2.$7 "$8"'
+elif touch -am 1231235901 $$.touch >/dev/null 2>&1 && test ! -f 1231235901 -a -f $$.touch; then
+  shar_touch='touch -am $3$4$5$6$2 "$8"'
+else
+  shar_touch=:
+  echo
+  $echo 'WARNING: not restoring timestamps.  Consider getting and'
+  $echo "installing GNU \`touch', distributed in GNU File Utilities..."
+  echo
+fi
+rm -f 200112312359.59 123123592001.59 123123592001.5 1231235901 $$.touch
+#
+if mkdir _sh25846; then
+  $echo 'x -' 'creating lock directory'
+else
+  $echo 'failed to create lock directory'
+  exit 1
+fi
+# ============= dllist.c ==============
+if test -f 'dllist.c' && test "$first_param" != -c; then
+  $echo 'x -' SKIPPING 'dllist.c' '(file already exists)'
+else
+  $echo 'x -' extracting 'dllist.c' '(text)'
+  sed 's/^X//' << 'SHAR_EOF' > 'dllist.c' &&
+/*
+Libraries for fields, doubly-linked lists and red-black trees.
+Copyright (C) 2001 James S. Plank
+X
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+X
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+X
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+X
+---------------------------------------------------------------------------
+Please see http://www.cs.utk.edu/~plank/plank/classes/cs360/360/notes/Libfdr/
+for instruction on how to use this library.
+X
+Jim Plank
+plank@cs.utk.edu
+http://www.cs.utk.edu/~plank
+X
+Associate Professor
+Department of Computer Science
+University of Tennessee
+203 Claxton Complex
+1122 Volunteer Blvd.
+Knoxville, TN 37996-3450
+X
+X     865-974-4397
+Fax: 865-974-4404
+*/
+X
+#include <stdio.h>    /* Basic includes and definitions */
+#include "dllist.h"
+X
+/*---------------------------------------------------------------------*
+X * PROCEDURES FOR MANIPULATING DOUBLY LINKED LISTS 
+X * Each list contains a sentinal node, so that     
+X * the first item in list l is l->flink.  If l is  
+X * empty, then l->flink = l->blink = l.            
+X *---------------------------------------------------------------------*/
+X
+Dllist new_dllist()
+{
+X  Dllist d;
+X
+X  d = (Dllist) malloc (sizeof(struct dllist));
+X  d->flink = d;
+X  d->blink = d;
+X  return d;
+}
+X 
+dll_insert_b(Dllist node, Jval v)       /* Inserts before a given node */
+{
+X  Dllist newnode;
+X
+X  newnode = (Dllist) malloc (sizeof(struct dllist));
+X  newnode->val = v;
+X
+X  newnode->flink = node;
+X  newnode->blink = node->blink;
+X  newnode->flink->blink = newnode;
+X  newnode->blink->flink = newnode;
+}
+X
+dll_insert_a(Dllist n, Jval val)        /* Inserts after a given node */
+{
+X  dll_insert_b(n->flink, val);
+}
+X
+dll_append(Dllist l, Jval val)     /* Inserts at the end of the list */
+{
+X  dll_insert_b(l, val);
+}
+X
+dll_prepend(Dllist l, Jval val)    /* Inserts at the beginning of the list */
+{
+X  dll_insert_b(l->flink, val);
+}
+X
+X
+dll_delete_node(Dllist node)		/* Deletes an arbitrary iterm */
+{
+X  node->flink->blink = node->blink;
+X  node->blink->flink = node->flink;
+X  free(node);
+}
+X
+dll_empty(Dllist l)
+{
+X  return (l->flink == l);
+}
+X 
+free_dllist(Dllist l)
+{
+X  while (!dll_empty(l)) {
+X    dll_delete_node(dll_first(l));
+X  }
+X  free(l);
+}
+X
+Jval dll_val(Dllist l)
+{
+X  return l->val;
+}
+X
+SHAR_EOF
+  (set 20 01 01 16 15 57 40 'dllist.c'; eval "$shar_touch") &&
+  chmod 0644 'dllist.c' ||
+  $echo 'restore of' 'dllist.c' 'failed'
+  if ( md5sum --help 2>&1 | grep 'sage: md5sum \[' ) >/dev/null 2>&1 \
+  && ( md5sum --version 2>&1 | grep -v 'textutils 1.12' ) >/dev/null; then
+    md5sum -c << SHAR_EOF >/dev/null 2>&1 \
+    || $echo 'dllist.c:' 'MD5 check failed'
+ec738bd477446c0fd3df0428a180759c  dllist.c
+SHAR_EOF
+  else
+    shar_count="`LC_ALL= LC_CTYPE= LANG= wc -c < 'dllist.c'`"
+    test 2783 -eq "$shar_count" ||
+    $echo 'dllist.c:' 'original size' '2783,' 'current size' "$shar_count!"
+  fi
+fi
+# ============= dllist.h ==============
+if test -f 'dllist.h' && test "$first_param" != -c; then
+  $echo 'x -' SKIPPING 'dllist.h' '(file already exists)'
+else
+  $echo 'x -' extracting 'dllist.h' '(text)'
+  sed 's/^X//' << 'SHAR_EOF' > 'dllist.h' &&
+/*
+Libraries for fields, doubly-linked lists and red-black trees.
+Copyright (C) 2001 James S. Plank
+X
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+X
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+X
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+X
+---------------------------------------------------------------------------
+Please see http://www.cs.utk.edu/~plank/plank/classes/cs360/360/notes/Libfdr/
+for instruction on how to use this library.
+X
+Jim Plank
+plank@cs.utk.edu
+http://www.cs.utk.edu/~plank
+X
+Associate Professor
+Department of Computer Science
+University of Tennessee
+203 Claxton Complex
+1122 Volunteer Blvd.
+Knoxville, TN 37996-3450
+X
+X     865-974-4397
+Fax: 865-974-4404
+*/
+#ifndef _DLLIST_H_
+#define _DLLIST_H_
+X
+#include "jval.h"
+X
+typedef struct dllist {
+X  struct dllist *flink;
+X  struct dllist *blink;
+X  Jval val;
+} *Dllist;
+X
+extern Dllist new_dllist();
+extern free_dllist(Dllist);
+X
+extern dll_append(Dllist, Jval);
+extern dll_prepend(Dllist, Jval);
+extern dll_insert_b(Dllist, Jval);
+extern dll_insert_a(Dllist, Jval);
+X
+extern dll_delete_node(Dllist);
+extern int dll_empty(Dllist);
+X
+extern Jval dll_val(Dllist);
+X
+#define dll_first(d) ((d)->flink)
+#define dll_next(d) ((d)->flink)
+#define dll_last(d) ((d)->blink)
+#define dll_prev(d) ((d)->blink)
+#define dll_nil(d) (d)
+X
+#define dll_traverse(ptr, list) \
+X  for (ptr = list->flink; ptr != list; ptr = ptr->flink)
+#define dll_rtraverse(ptr, list) \
+X  for (ptr = list->blink; ptr != list; ptr = ptr->blink)
+X
+#endif
+SHAR_EOF
+  (set 20 01 01 16 15 57 51 'dllist.h'; eval "$shar_touch") &&
+  chmod 0644 'dllist.h' ||
+  $echo 'restore of' 'dllist.h' 'failed'
+  if ( md5sum --help 2>&1 | grep 'sage: md5sum \[' ) >/dev/null 2>&1 \
+  && ( md5sum --version 2>&1 | grep -v 'textutils 1.12' ) >/dev/null; then
+    md5sum -c << SHAR_EOF >/dev/null 2>&1 \
+    || $echo 'dllist.h:' 'MD5 check failed'
+e988ef59bf66c7ef9ad0d884ab004afe  dllist.h
+SHAR_EOF
+  else
+    shar_count="`LC_ALL= LC_CTYPE= LANG= wc -c < 'dllist.h'`"
+    test 2028 -eq "$shar_count" ||
+    $echo 'dllist.h:' 'original size' '2028,' 'current size' "$shar_count!"
+  fi
+fi
+# ============= fields.c ==============
+if test -f 'fields.c' && test "$first_param" != -c; then
+  $echo 'x -' SKIPPING 'fields.c' '(file already exists)'
+else
+  $echo 'x -' extracting 'fields.c' '(text)'
+  sed 's/^X//' << 'SHAR_EOF' > 'fields.c' &&
+/*
+Libraries for fields, doubly-linked lists and red-black trees.
+Copyright (C) 2001 James S. Plank
+X
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+X
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+X
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+X
+---------------------------------------------------------------------------
+Please see http://www.cs.utk.edu/~plank/plank/classes/cs360/360/notes/Libfdr/
+for instruction on how to use this library.
+X
+Jim Plank
+plank@cs.utk.edu
+http://www.cs.utk.edu/~plank
+X
+Associate Professor
+Department of Computer Science
+University of Tennessee
+203 Claxton Complex
+1122 Volunteer Blvd.
+Knoxville, TN 37996-3450
+X
+X     865-974-4397
+Fax: 865-974-4404
+*/
+#include <stdio.h>
+#include "fields.h"
+X
+#define talloc(ty, sz) (ty *) malloc (sz * sizeof(ty))
+#define strdup(s) ((char *) strcpy(talloc(char, strlen(s)+1), s))
+X
+static IS make_inputstruct(char *filename, char *key)
+X                         /* "f" for regular file or stdin if filename is NULL */
+X                         /* "p" if filename is a command for popen */
+{
+X  IS is;
+X  int file;
+X  
+X  if (strcmp(key, "f") == 0) {
+X    file = 1;
+X  } else if (strcmp(key, "p") == 0) {
+X    file = 0;
+X  } else {
+X    return NULL;
+X  }
+X
+X  is = talloc(struct inputstruct, 1);
+X
+X  is->text1[MAXLEN-1] = '\0';
+X  is->NF = 0;
+X  is->line = 0;
+X  if (filename == NULL) {
+X    is->name = "stdin";
+X    is->f = stdin;
+X  } else {
+X    is->name = filename;
+X    is->file = file;
+X    if (file) {
+X      is->f = fopen(filename, "r");
+X    } else {
+X      is->f = popen(filename, "r");
+X    }
+X    if (is->f == NULL) {
+X      free(is);
+X      return NULL;
+X    }
+X  }
+X  return is;
+}
+X
+X  
+X
+IS new_inputstruct(char *filename)   /* use NULL for stdin.  Calls malloc */
+{
+X  return make_inputstruct(filename, "f");
+}
+X
+IS pipe_inputstruct(char *command)
+{
+X  return make_inputstruct(command, "p");
+}
+X
+int get_line(IS is)
+{
+X  int i, len;
+X  int f;
+X  char *tmp;
+X  char lastchar;
+X  char *line;
+X
+X  is->NF = 0;
+X
+X  if (fgets(is->text1, MAXLEN-1, is->f) == NULL) {
+X    is->NF = -1;
+X    return -1;
+X  }
+X
+X  is->line++;
+X  strcpy(is->text2, is->text1);
+X
+X  line = is->text2;
+X  lastchar = ' ';
+X  for (i = 0; line[i] != '\0' && i < MAXLEN-1; i++) {
+X    if (isspace(line[i])) {
+X      lastchar = line[i];
+X      line[i] = '\0';
+X    } else {
+X      if (isspace(lastchar)) {
+X        is->fields[is->NF] = line+i;
+X        is->NF++;
+X      }
+X      lastchar = line[i];
+X    }
+X  }
+X  return is->NF;
+}
+X
+void jettison_inputstruct(IS is)
+{
+X  if (is->f != stdin) {
+X    if (is->file) {
+X      fclose(is->f);
+X    } else {
+X      pclose(is->f);
+X    }
+X  }
+X  free(is);
+X  return;
+} 
+SHAR_EOF
+  (set 20 01 01 16 15 57 58 'fields.c'; eval "$shar_touch") &&
+  chmod 0644 'fields.c' ||
+  $echo 'restore of' 'fields.c' 'failed'
+  if ( md5sum --help 2>&1 | grep 'sage: md5sum \[' ) >/dev/null 2>&1 \
+  && ( md5sum --version 2>&1 | grep -v 'textutils 1.12' ) >/dev/null; then
+    md5sum -c << SHAR_EOF >/dev/null 2>&1 \
+    || $echo 'fields.c:' 'MD5 check failed'
+77537046a95d0bf9781289f1e55471d1  fields.c
+SHAR_EOF
+  else
+    shar_count="`LC_ALL= LC_CTYPE= LANG= wc -c < 'fields.c'`"
+    test 3128 -eq "$shar_count" ||
+    $echo 'fields.c:' 'original size' '3128,' 'current size' "$shar_count!"
+  fi
+fi
+# ============= fields.h ==============
+if test -f 'fields.h' && test "$first_param" != -c; then
+  $echo 'x -' SKIPPING 'fields.h' '(file already exists)'
+else
+  $echo 'x -' extracting 'fields.h' '(text)'
+  sed 's/^X//' << 'SHAR_EOF' > 'fields.h' &&
+/*
+Libraries for fields, doubly-linked lists and red-black trees.
+Copyright (C) 2001 James S. Plank
+X
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+X
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+X
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+X
+---------------------------------------------------------------------------
+Please see http://www.cs.utk.edu/~plank/plank/classes/cs360/360/notes/Libfdr/
+for instruction on how to use this library.
+X
+Jim Plank
+plank@cs.utk.edu
+http://www.cs.utk.edu/~plank
+X
+Associate Professor
+Department of Computer Science
+University of Tennessee
+203 Claxton Complex
+1122 Volunteer Blvd.
+Knoxville, TN 37996-3450
+X
+X     865-974-4397
+Fax: 865-974-4404
+X */
+#ifndef _FIELDS_ 
+#define _FIELDS_ 
+X
+/* The fields library -- making input processing easier */
+X
+#include <stdio.h>
+#define MAXLEN 1001
+#define MAXFIELDS 1000
+X
+typedef struct inputstruct {
+X  char *name;               /* File name */
+X  FILE *f;                  /* File descriptor */
+X  int line;                 /* Line number */
+X  char text1[MAXLEN];       /* The line */
+X  char text2[MAXLEN];       /* Working -- contains fields */
+X  int NF;                   /* Number of fields */
+X  char *fields[MAXFIELDS];  /* Pointers to fields */
+X  int file;                 /* 1 for file, 0 for popen */
+} *IS;
+X
+extern IS new_inputstruct(/* FILENAME -- NULL for stdin */);
+extern IS pipe_inputstruct(/* COMMAND -- NULL for stdin */);
+extern int get_line(/* IS */); /* returns NF, or -1 on EOF.  Does not
+X                                  close the file */
+extern void jettison_inputstruct(/* IS */);  /* frees the IS and fcloses 
+X                                                the file */
+#endif
+SHAR_EOF
+  (set 20 01 01 16 15 58 06 'fields.h'; eval "$shar_touch") &&
+  chmod 0644 'fields.h' ||
+  $echo 'restore of' 'fields.h' 'failed'
+  if ( md5sum --help 2>&1 | grep 'sage: md5sum \[' ) >/dev/null 2>&1 \
+  && ( md5sum --version 2>&1 | grep -v 'textutils 1.12' ) >/dev/null; then
+    md5sum -c << SHAR_EOF >/dev/null 2>&1 \
+    || $echo 'fields.h:' 'MD5 check failed'
+916df1ede6cbb12bd55f9edcf33e47eb  fields.h
+SHAR_EOF
+  else
+    shar_count="`LC_ALL= LC_CTYPE= LANG= wc -c < 'fields.h'`"
+    test 2227 -eq "$shar_count" ||
+    $echo 'fields.h:' 'original size' '2227,' 'current size' "$shar_count!"
+  fi
+fi
+# ============= jrb.c ==============
+if test -f 'jrb.c' && test "$first_param" != -c; then
+  $echo 'x -' SKIPPING 'jrb.c' '(file already exists)'
+else
+  $echo 'x -' extracting 'jrb.c' '(text)'
+  sed 's/^X//' << 'SHAR_EOF' > 'jrb.c' &&
+/*
+Libraries for fields, doubly-linked lists and red-black trees.
+Copyright (C) 2001 James S. Plank
+X
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+X
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+X
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+X
+---------------------------------------------------------------------------
+Please see http://www.cs.utk.edu/~plank/plank/classes/cs360/360/notes/Libfdr/
+for instruction on how to use this library.
+X
+Jim Plank
+plank@cs.utk.edu
+http://www.cs.utk.edu/~plank
+X
+Associate Professor
+Department of Computer Science
+University of Tennessee
+203 Claxton Complex
+1122 Volunteer Blvd.
+Knoxville, TN 37996-3450
+X
+X     865-974-4397
+Fax: 865-974-4404
+X */
+/* Revision 1.2.  Jim Plank */
+X
+/* Original code by Jim Plank (plank@cs.utk.edu) */
+/* modified for THINK C 6.0 for Macintosh by Chris Bartley */
+X 
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include "jrb.h"
+X 
+static void mk_new_int(JRB l, JRB r, JRB p, int il);
+static JRB lprev(JRB n);
+static JRB rprev(JRB n);
+static void recolor(JRB n);
+static void single_rotate(JRB y, int l);
+static void jrb_print_tree(JRB t, int level);
+static void jrb_iprint_tree(JRB t, int level);
+X 
+#define isred(n) (n->red)
+#define isblack(n) (!isred(n))
+#define isleft(n) (n->left)
+#define isright(n) (!isleft(n))
+#define isint(n) (n->internal)
+#define isext(n) (!isint(n))
+#define ishead(n) (n->roothead & 2)
+#define isroot(n) (n->roothead & 1)
+#define getlext(n) ((struct jrb_node *)(n->key.v))
+#define setlext(node, val) node->key.v = (void *) (val)
+#define getrext(n) ((struct jrb_node *)(n->val.v))
+#define setrext(node, value) node->val.v = (void *) (value)
+#define setred(n) n->red = 1
+#define setblack(n) n->red = 0
+#define setleft(n) n->left = 1
+#define setright(n) n->left = 0
+#define sethead(n) (n->roothead |= 2)
+#define setroot(n) (n->roothead |= 1)
+#define setint(n) n->internal = 1
+#define setext(n) n->internal = 0
+#define setnormal(n) n->roothead = 0
+#define sibling(n) ((isleft(n)) ? n->parent->blink : n->parent->flink)
+X 
+static void insert(JRB item, JRB list)	/* Inserts to the end of a list */
+{
+X  JRB last_node;
+X 
+X  last_node = list->blink;
+X 
+X  list->blink = item;
+X  last_node->flink = item;
+X  item->blink = last_node;
+X  item->flink = list;
+}
+X 
+static void delete_item(JRB item)		/* Deletes an arbitrary iterm */
+{
+X  item->flink->blink = item->blink;
+X  item->blink->flink = item->flink;
+}
+X
+#define mk_new_ext(new, kkkey, vvval) {\
+X  new = (JRB) malloc(sizeof(struct jrb_node));\
+X  new->val = vvval;\
+X  new->key = kkkey;\
+X  setext(new);\
+X  setblack(new);\
+X  setnormal(new);\
+}
+X 
+static void mk_new_int(JRB l, JRB r, JRB p, int il)
+{
+X  JRB newnode;
+X 
+X  newnode = (JRB) malloc(sizeof(struct jrb_node));
+X  setint(newnode);
+X  setred(newnode);
+X  setnormal(newnode);
+X  newnode->flink = l;
+X  newnode->blink = r;
+X  newnode->parent = p;
+X  setlext(newnode, l);
+X  setrext(newnode, r);
+X  l->parent = newnode;
+X  r->parent = newnode;
+X  setleft(l);
+X  setright(r);
+X  if (ishead(p)) {
+X    p->parent = newnode;
+X    setroot(newnode);
+X  } else if (il) {
+X    setleft(newnode);
+X    p->flink = newnode;
+X  } else {
+X    setright(newnode);
+X    p->blink = newnode;
+X  }
+X  recolor(newnode);
+}  
+X  
+X   
+JRB lprev(JRB n)
+{
+X  if (ishead(n)) return n;
+X  while (!isroot(n)) {
+X    if (isright(n)) return n->parent;
+X    n = n->parent;
+X  }
+X  return n->parent;
+}
+X 
+JRB rprev(JRB n)
+{
+X  if (ishead(n)) return n;
+X  while (!isroot(n)) {
+X    if (isleft(n)) return n->parent;
+X    n = n->parent;
+X  }
+X  return n->parent;
+}
+X 
+JRB make_jrb()
+{
+X  JRB head;
+X 
+X  head = (JRB) malloc (sizeof(struct jrb_node));
+X  head->flink = head;
+X  head->blink = head;
+X  head->parent = head;
+X  head->key.s = "";
+X  sethead(head);
+X  return head;
+}
+X 
+JRB jrb_find_gte_str(JRB n, char *key, int *fnd)
+{
+X  int cmp;
+X 
+X  *fnd = 0;
+X  if (!ishead(n)) {
+X    fprintf(stderr, "jrb_find_gte_str called on non-head 0x%x\n", n);
+X    exit(1);
+X  }
+X  if (n->parent == n) return n;
+X  cmp = strcmp(key, n->blink->key.s);
+X  if (cmp == 0) {
+X    *fnd = 1;
+X    return n->blink; 
+X  }
+X  if (cmp > 0) return n; 
+X  else n = n->parent;
+X  while (1) {
+X    if (isext(n)) return n;
+X    cmp = strcmp(key, getlext(n)->key.s);
+X    if (cmp == 0) {
+X      *fnd = 1;
+X      return getlext(n);
+X    }
+X    if (cmp < 0) n = n->flink ; else n = n->blink;
+X  }
+}
+X 
+JRB jrb_find_str(JRB n, char *key)
+{
+X  int fnd;
+X  JRB j;
+X  j = jrb_find_gte_str(n, key, &fnd);
+X  if (fnd) return j; else return NULL;
+}
+X 
+JRB jrb_find_gte_int(JRB n, int ikey, int *fnd)
+{
+X  *fnd = 0;
+X  if (!ishead(n)) {
+X    fprintf(stderr, "jrb_find_gte_int called on non-head 0x%x\n", n);
+X    exit(1);
+X  }
+X  if (n->parent == n) return n;
+X  if (ikey == n->blink->key.i) {
+X    *fnd = 1;
+X    return n->blink; 
+X  }
+X  if (ikey > n->blink->key.i) return n; 
+X  else n = n->parent;
+X  while (1) {
+X    if (isext(n)) return n;
+X    if (ikey == getlext(n)->key.i) {
+X      *fnd = 1;
+X      return getlext(n);
+X    }
+X    n = (ikey < getlext(n)->key.i) ? n->flink : n->blink;
+X  }
+}
+X 
+JRB jrb_find_int(JRB n, int ikey)
+{
+X  int fnd;
+X  JRB j;
+X
+X  j = jrb_find_gte_int(n, ikey, &fnd);
+X  if (fnd) return j; else return NULL;
+}
+X 
+JRB jrb_find_gte_dbl(JRB n, double dkey, int *fnd)
+{
+X  *fnd = 0;
+X  if (!ishead(n)) {
+X    fprintf(stderr, "jrb_find_gte_dbl called on non-head 0x%x\n", n);
+X    exit(1);
+X  }
+X  if (n->parent == n) return n;
+X  if (dkey == n->blink->key.d) {
+X    *fnd = 1;
+X    return n->blink; 
+X  }
+X  if (dkey > n->blink->key.d) return n; 
+X  else n = n->parent;
+X  while (1) {
+X    if (isext(n)) return n;
+X    if (dkey == getlext(n)->key.d) {
+X      *fnd = 1;
+X      return getlext(n);
+X    }
+X    n = (dkey < getlext(n)->key.d) ? n->flink : n->blink;
+X  }
+}
+X 
+JRB jrb_find_dbl(JRB n, double dkey)
+{
+X  int fnd;
+X  JRB j;
+X
+X  j = jrb_find_gte_dbl(n, dkey, &fnd);
+X  if (fnd) return j; else return NULL;
+}
+X 
+JRB jrb_find_gte_gen(JRB n, Jval key,int (*fxn)(Jval, Jval), int *fnd)
+{
+X  int cmp;
+X 
+X  *fnd = 0;
+X  if (!ishead(n)) {
+X    fprintf(stderr, "jrb_find_gte_str called on non-head 0x%x\n", n);
+X    exit(1);
+X  }
+X  if (n->parent == n) return n;
+X  cmp = (*fxn)(key, n->blink->key);
+X  if (cmp == 0) {
+X    *fnd = 1;
+X    return n->blink; 
+X  }
+X  if (cmp > 0) return n; 
+X  else n = n->parent;
+X  while (1) {
+X    if (isext(n)) return n;
+X    cmp = (*fxn)(key, getlext(n)->key);
+X    if (cmp == 0) {
+X      *fnd = 1;
+X      return getlext(n);
+X    }
+X    if (cmp < 0) n = n->flink ; else n = n->blink;
+X  }
+}
+X 
+JRB jrb_find_gen(JRB n, Jval key, int (*fxn)(Jval, Jval))
+{
+X  int fnd;
+X  JRB j;
+X
+X  j = jrb_find_gte_gen(n, key, fxn, &fnd);
+X  if (fnd) return j; else return NULL;
+}
+X 
+static JRB jrb_insert_b(JRB n, Jval key, Jval val)
+{
+X  JRB newleft, newright, newnode, list, p;
+X 
+X  if (ishead(n)) {
+X    if (n->parent == n) {         /* Tree is empty */
+X      mk_new_ext(newnode, key, val);
+X      insert(newnode, n);
+X      n->parent = newnode;
+X      newnode->parent = n;
+X      setroot(newnode);
+X      return newnode;
+X    } else {
+X      mk_new_ext(newright, key, val);
+X      insert(newright, n);
+X      newleft = newright->blink;
+X      setnormal(newleft);
+X      mk_new_int(newleft, newright, newleft->parent, isleft(newleft));
+X      p = rprev(newright);
+X      if (!ishead(p)) setlext(p, newright);
+X      return newright;
+X    }
+X  } else {
+X    mk_new_ext(newleft, key, val);
+X    insert(newleft, n);
+X    setnormal(n);
+X    mk_new_int(newleft, n, n->parent, isleft(n));
+X    p = lprev(newleft);
+X    if (!ishead(p)) setrext(p, newleft);
+X    return newleft;    
+X  }
+}
+X 
+static void recolor(JRB n)
+{  
+X  JRB p, gp, s;
+X  int done = 0;
+X 
+X  while(!done) {
+X    if (isroot(n)) {
+X      setblack(n);
+X      return;
+X    }
+X 
+X    p = n->parent;
+X 
+X    if (isblack(p)) return;
+X    
+X    if (isroot(p)) {
+X      setblack(p);
+X      return;
+X    }
+X 
+X    gp = p->parent;
+X    s = sibling(p);
+X    if (isred(s)) {
+X      setblack(p);
+X      setred(gp);
+X      setblack(s);
+X      n = gp;
+X    } else {
+X      done = 1;
+X    }
+X  }
+X  /* p's sibling is black, p is red, gp is black */
+X  
+X  if ((isleft(n) == 0) == (isleft(p) == 0)) {
+X    single_rotate(gp, isleft(n));
+X    setblack(p);
+X    setred(gp);
+X  } else {
+X    single_rotate(p, isleft(n));
+X    single_rotate(gp, isleft(n));
+X    setblack(n);
+X    setred(gp);
+X  }
+}
+X 
+static void single_rotate(JRB y, int l)
+{
+X  int rl, ir;
+X  JRB x, yp;
+X  char *tmp;
+X 
+X  ir = isroot(y);
+X  yp = y->parent;
+X  if (!ir) {
+X    rl = isleft(y);
+X  }
+X  
+X  if (l) {
+X    x = y->flink;
+X    y->flink = x->blink;
+X    setleft(y->flink);
+X    y->flink->parent = y;
+X    x->blink = y;
+X    setright(y);  
+X  } else {
+X    x = y->blink;
+X    y->blink = x->flink;
+X    setright(y->blink);
+X    y->blink->parent = y;
+X    x->flink = y;
+X    setleft(y);  
+X  }
+X 
+X  x->parent = yp;
+X  y->parent = x;
+X  if (ir) {
+X    yp->parent = x;
+X    setnormal(y);
+X    setroot(x);
+X  } else {
+X    if (rl) {
+X      yp->flink = x;
+X      setleft(x);
+X    } else {
+X      yp->blink = x;
+X      setright(x);
+X    }
+X  }
+}
+X    
+void jrb_delete_node(JRB n)
+{
+X  JRB s, p, gp;
+X  char ir;
+X 
+X  if (isint(n)) {
+X    fprintf(stderr, "Cannot delete an internal node: 0x%x\n", n);
+X    exit(1);
+X  }
+X  if (ishead(n)) {
+X    fprintf(stderr, "Cannot delete the head of an jrb_tree: 0x%x\n", n);
+X    exit(1);
+X  }
+X  delete_item(n); /* Delete it from the list */
+X  p = n->parent;  /* The only node */
+X  if (isroot(n)) {
+X    p->parent = p;
+X    free(n);
+X    return;
+X  } 
+X  s = sibling(n);    /* The only node after deletion */
+X  if (isroot(p)) {
+X    s->parent = p->parent;
+X    s->parent->parent = s;
+X    setroot(s);
+X    free(p);
+X    free(n);
+X    return;
+X  }
+X  gp = p->parent;  /* Set parent to sibling */
+X  s->parent = gp;
+X  if (isleft(p)) {
+X    gp->flink = s;
+X    setleft(s);
+X  } else {
+X    gp->blink = s;
+X    setright(s);
+X  }
+X  ir = isred(p);
+X  free(p);
+X  free(n);
+X  
+X  if (isext(s)) {      /* Update proper rext and lext values */
+X    p = lprev(s); 
+X    if (!ishead(p)) setrext(p, s);
+X    p = rprev(s);
+X    if (!ishead(p)) setlext(p, s);
+X  } else if (isblack(s)) {
+X    fprintf(stderr, "DELETION PROB -- sib is black, internal\n");
+X    exit(1);
+X  } else {
+X    p = lprev(s);
+X    if (!ishead(p)) setrext(p, s->flink);
+X    p = rprev(s);
+X    if (!ishead(p)) setlext(p, s->blink);
+X    setblack(s);
+X    return;
+X  }
+X 
+X  if (ir) return;
+X 
+X  /* Recolor */
+X  
+X  n = s;
+X  p = n->parent;
+X  s = sibling(n);
+X  while(isblack(p) && isblack(s) && isint(s) && 
+X        isblack(s->flink) && isblack(s->blink)) {
+X    setred(s);
+X    n = p;
+X    if (isroot(n)) return;
+X    p = n->parent;
+X    s = sibling(n);
+X  }
+X  
+X  if (isblack(p) && isred(s)) {  /* Rotation 2.3b */
+X    single_rotate(p, isright(n));
+X    setred(p);
+X    setblack(s);
+X    s = sibling(n);
+X  }
+X    
+X  { JRB x, z; char il;
+X    
+X    if (isext(s)) {
+X      fprintf(stderr, "DELETION ERROR: sibling not internal\n");
+X      exit(1);
+X    }
+X 
+X    il = isleft(n);
+X    x = il ? s->flink : s->blink ;
+X    z = sibling(x);
+X 
+X    if (isred(z)) {  /* Rotation 2.3f */
+X      single_rotate(p, !il);
+X      setblack(z);
+X      if (isred(p)) setred(s); else setblack(s);
+X      setblack(p);
+X    } else if (isblack(x)) {   /* Recoloring only (2.3c) */
+X      if (isred(s) || isblack(p)) {
+X        fprintf(stderr, "DELETION ERROR: 2.3c not quite right\n");
+X        exit(1);
+X      }
+X      setblack(p);
+X      setred(s);
+X      return;
+X    } else if (isred(p)) { /* 2.3d */
+X      single_rotate(s, il);
+X      single_rotate(p, !il);
+X      setblack(x);
+X      setred(s);
+X      return;
+X    } else {  /* 2.3e */
+X      single_rotate(s, il);
+X      single_rotate(p, !il);
+X      setblack(x);
+X      return;
+X    }
+X  }
+}
+X 
+X 
+void jrb_print_tree(JRB t, int level)
+{
+X  int i;
+X  if (ishead(t) && t->parent == t) {
+X    printf("tree 0x%x is empty\n", t);
+X  } else if (ishead(t)) {
+X    printf("Head: 0x%x.  Root = 0x%x\n", t, t->parent);
+X    jrb_print_tree(t->parent, 0);
+X  } else {
+X    if (isext(t)) {
+X      for (i = 0; i < level; i++) putchar(' ');
+X      printf("Ext node 0x%x: %c,%c: p=0x%x, k=%s\n", 
+X              t, isred(t)?'R':'B', isleft(t)?'l':'r', t->parent, t->key.s);
+X    } else {
+X      jrb_print_tree(t->flink, level+2);
+X      jrb_print_tree(t->blink, level+2);
+X      for (i = 0; i < level; i++) putchar(' ');
+X      printf("Int node 0x%x: %c,%c: l=0x%x, r=0x%x, p=0x%x, lr=(%s,%s)\n", 
+X              t, isred(t)?'R':'B', isleft(t)?'l':'r', t->flink, 
+X              t->blink, 
+X              t->parent, getlext(t)->key.s, getrext(t)->key.s);
+X    }
+X  }
+}
+X 
+void jrb_iprint_tree(JRB t, int level)
+{
+X  int i;
+X  if (ishead(t) && t->parent == t) {
+X    printf("tree 0x%x is empty\n", t);
+X  } else if (ishead(t)) {
+X    printf("Head: 0x%x.  Root = 0x%x, < = 0x%x, > = 0x%x\n", 
+X            t, t->parent, t->blink, t->flink);
+X    jrb_iprint_tree(t->parent, 0);
+X  } else {
+X    if (isext(t)) {
+X      for (i = 0; i < level; i++) putchar(' ');
+X      printf("Ext node 0x%x: %c,%c: p=0x%x, <=0x%x, >=0x%x k=%d\n", 
+X              t, isred(t)?'R':'B', isleft(t)?'l':'r', t->parent, 
+X              t->blink, t->flink, t->key.i);
+X    } else {
+X      jrb_iprint_tree(t->flink, level+2);
+X      jrb_iprint_tree(t->blink, level+2);
+X      for (i = 0; i < level; i++) putchar(' ');
+X      printf("Int node 0x%x: %c,%c: l=0x%x, r=0x%x, p=0x%x, lr=(%d,%d)\n", 
+X              t, isred(t)?'R':'B', isleft(t)?'l':'r', t->flink, 
+X              t->blink, 
+X              t->parent, getlext(t)->key.i, getrext(t)->key.i);
+X    }
+X  }
+}
+X      
+int jrb_nblack(JRB n)
+{
+X  int nb;
+X  if (ishead(n) || isint(n)) {
+X    fprintf(stderr, "ERROR: jrb_nblack called on a non-external node 0x%x\n",
+X            n);
+X    exit(1);
+X  }
+X  nb = 0;
+X  while(!ishead(n)) {
+X    if (isblack(n)) nb++;
+X    n = n->parent;
+X  }
+X  return nb;
+}
+X 
+int jrb_plength(JRB n)
+{
+X  int pl;
+X  if (ishead(n) || isint(n)) {
+X    fprintf(stderr, "ERROR: jrb_plength called on a non-external node 0x%x\n",
+X            n);
+X    exit(1);
+X  }
+X  pl = 0;
+X  while(!ishead(n)) {
+X    pl++;
+X    n = n->parent;
+X  }
+X  return pl;
+}
+X 
+void jrb_free_tree(JRB n)
+{
+X  if (!ishead(n)) {
+X    fprintf(stderr, "ERROR: Rb_free_tree called on a non-head node\n");
+X    exit(1);
+X  }
+X 
+X  while(jrb_first(n) != jrb_nil(n)) {
+X    jrb_delete_node(jrb_first(n));
+X  }
+X  free(n);
+}
+X 
+Jval jrb_val(JRB n)
+{
+X  return n->val;
+}
+X 
+static JRB jrb_insert_a(JRB nd, Jval key, Jval val)
+{
+X  return jrb_insert_b(nd->flink, key, val);
+}
+X
+JRB jrb_insert_str(JRB tree, char *key, Jval val)
+{
+X  Jval k;
+X  int fnd;
+X
+X  k.s = key;
+X  return jrb_insert_b(jrb_find_gte_str(tree, key, &fnd), k, val);
+}
+X
+JRB jrb_insert_int(JRB tree, int ikey, Jval val)
+{
+X  Jval k;
+X  int fnd;
+X
+X  k.i = ikey;
+X  return jrb_insert_b(jrb_find_gte_int(tree, ikey, &fnd), k, val);
+}
+X
+JRB jrb_insert_dbl(JRB tree, double dkey, Jval val)
+{
+X  Jval k;
+X  int fnd;
+X
+X  k.d = dkey;
+X  return jrb_insert_b(jrb_find_gte_dbl(tree, dkey, &fnd), k, val);
+}
+X
+JRB jrb_insert_gen(JRB tree, Jval key, Jval val,
+X                          int (*func)(Jval, Jval))
+{ 
+X  int fnd;
+X
+X  return jrb_insert_b(jrb_find_gte_gen(tree, key, func, &fnd), key, val);
+}
+X
+X
+SHAR_EOF
+  (set 20 01 01 16 15 58 13 'jrb.c'; eval "$shar_touch") &&
+  chmod 0644 'jrb.c' ||
+  $echo 'restore of' 'jrb.c' 'failed'
+  if ( md5sum --help 2>&1 | grep 'sage: md5sum \[' ) >/dev/null 2>&1 \
+  && ( md5sum --version 2>&1 | grep -v 'textutils 1.12' ) >/dev/null; then
+    md5sum -c << SHAR_EOF >/dev/null 2>&1 \
+    || $echo 'jrb.c:' 'MD5 check failed'
+c88a30b59c0531de0f546ef960d6f176  jrb.c
+SHAR_EOF
+  else
+    shar_count="`LC_ALL= LC_CTYPE= LANG= wc -c < 'jrb.c'`"
+    test 15274 -eq "$shar_count" ||
+    $echo 'jrb.c:' 'original size' '15274,' 'current size' "$shar_count!"
+  fi
+fi
+# ============= jrb.h ==============
+if test -f 'jrb.h' && test "$first_param" != -c; then
+  $echo 'x -' SKIPPING 'jrb.h' '(file already exists)'
+else
+  $echo 'x -' extracting 'jrb.h' '(text)'
+  sed 's/^X//' << 'SHAR_EOF' > 'jrb.h' &&
+/*
+Libraries for fields, doubly-linked lists and red-black trees.
+Copyright (C) 2001 James S. Plank
+X
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+X
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+X
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+X
+---------------------------------------------------------------------------
+Please see http://www.cs.utk.edu/~plank/plank/classes/cs360/360/notes/Libfdr/
+for instruction on how to use this library.
+X
+Jim Plank
+plank@cs.utk.edu
+http://www.cs.utk.edu/~plank
+X
+Associate Professor
+Department of Computer Science
+University of Tennessee
+203 Claxton Complex
+1122 Volunteer Blvd.
+Knoxville, TN 37996-3450
+X
+X     865-974-4397
+Fax: 865-974-4404
+X */
+#ifndef	_JRB_H_
+#define	_JRB_H_
+X
+#include "jval.h"
+X
+/* Main jrb_node.  You only ever use the fields
+X   flink
+X   blink
+X   k.key or k.ikey
+X   v.val
+*/
+X
+X
+typedef struct jrb_node {
+X  unsigned char red;
+X  unsigned char internal;
+X  unsigned char left;
+X  unsigned char roothead;  /* (bit 1 is root, bit 2 is head) */
+X  struct jrb_node *flink;
+X  struct jrb_node *blink;
+X  struct jrb_node *parent;
+X  Jval key;
+X  Jval val;
+} *JRB;
+X
+X
+extern JRB make_jrb();   /* Creates a new rb-tree */
+X
+X
+/* Creates a node with key key and val val and inserts it into the tree.
+X   jrb_insert uses strcmp() as comparison funcion.  jrb_inserti uses <>=,
+X   jrb_insertg uses func() */
+X
+extern JRB jrb_insert_str(JRB tree, char *key, Jval val);
+extern JRB jrb_insert_int(JRB tree, int ikey, Jval val);
+extern JRB jrb_insert_dbl(JRB tree, double dkey, Jval val);
+extern JRB jrb_insert_gen(JRB tree, Jval key, Jval val, int (*func)(Jval,Jval));
+X
+/* returns an external node in t whose value is equal k. Returns NULL if
+X   there is no such node in the tree */
+X
+extern JRB jrb_find_str(JRB root, char *key);
+extern JRB jrb_find_int(JRB root, int ikey);
+extern JRB jrb_find_dbl(JRB root, double dkey);
+extern JRB jrb_find_gen(JRB root, Jval, int (*func)(Jval, Jval));
+X
+X
+/* returns an external node in t whose value is equal
+X  k or whose value is the smallest value greater than k. Sets found to
+X  1 if the key was found, and 0 otherwise.  */
+X
+extern JRB jrb_find_gte_str(JRB root, char *key, int *found);
+extern JRB jrb_find_gte_int(JRB root, int ikey, int *found);
+extern JRB jrb_find_gte_dbl(JRB root, double dkey, int *found);
+extern JRB jrb_find_gte_gen(JRB root, Jval key, 
+X                              int (*func)(Jval, Jval), int *found);
+X
+X
+/* Creates a node with key key and val val and inserts it into the 
+X   tree before/after node nd.  Does not check to ensure that you are 
+X   keeping the correct order */
+X
+extern void jrb_delete_node(JRB node);  /* Deletes and frees a node (but 
+X                                              not the key or val) */
+extern void jrb_free_tree(JRB root);  /* Deletes and frees an entire tree */
+X
+extern Jval jrb_val(JRB node);  /* Returns node->v.val -- this is to shut
+X                                       lint up */
+X
+extern int jrb_nblack(JRB n); /* returns # of black nodes in path from
+X                                    n to the root */
+int jrb_plength(JRB n);       /* returns the # of nodes in path from
+X				    n to the root */
+X 
+#define jrb_first(n) (n->flink)
+#define jrb_last(n) (n->blink)
+#define jrb_next(n) (n->flink)
+#define jrb_prev(n) (n->blink)
+#define jrb_empty(t) (t->flink == t)
+#ifndef jrb_nil
+#define jrb_nil(t) (t)
+#endif
+X 
+#define jrb_traverse(ptr, lst) \
+X  for(ptr = jrb_first(lst); ptr != jrb_nil(lst); ptr = jrb_next(ptr))
+X 
+#define jrb_rtraverse(ptr, lst) \
+X  for(ptr = jrb_last(lst); ptr != jrb_nil(lst); ptr = jrb_prev(ptr))
+X 
+#endif
+SHAR_EOF
+  (set 20 01 01 16 15 58 24 'jrb.h'; eval "$shar_touch") &&
+  chmod 0644 'jrb.h' ||
+  $echo 'restore of' 'jrb.h' 'failed'
+  if ( md5sum --help 2>&1 | grep 'sage: md5sum \[' ) >/dev/null 2>&1 \
+  && ( md5sum --version 2>&1 | grep -v 'textutils 1.12' ) >/dev/null; then
+    md5sum -c << SHAR_EOF >/dev/null 2>&1 \
+    || $echo 'jrb.h:' 'MD5 check failed'
+a7e704248bd86dcef93d62d133be5fc7  jrb.h
+SHAR_EOF
+  else
+    shar_count="`LC_ALL= LC_CTYPE= LANG= wc -c < 'jrb.h'`"
+    test 4116 -eq "$shar_count" ||
+    $echo 'jrb.h:' 'original size' '4116,' 'current size' "$shar_count!"
+  fi
+fi
+# ============= jval.c ==============
+if test -f 'jval.c' && test "$first_param" != -c; then
+  $echo 'x -' SKIPPING 'jval.c' '(file already exists)'
+else
+  $echo 'x -' extracting 'jval.c' '(text)'
+  sed 's/^X//' << 'SHAR_EOF' > 'jval.c' &&
+/*
+Libraries for fields, doubly-linked lists and red-black trees.
+Copyright (C) 2001 James S. Plank
+X
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+X
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+X
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+X
+---------------------------------------------------------------------------
+Please see http://www.cs.utk.edu/~plank/plank/classes/cs360/360/notes/Libfdr/
+for instruction on how to use this library.
+X
+Jim Plank
+plank@cs.utk.edu
+http://www.cs.utk.edu/~plank
+X
+Associate Professor
+Department of Computer Science
+University of Tennessee
+203 Claxton Complex
+1122 Volunteer Blvd.
+Knoxville, TN 37996-3450
+X
+X     865-974-4397
+Fax: 865-974-4404
+X */
+#include <stdio.h>
+#include "jval.h"
+X
+Jval JNULL;
+X
+Jval new_jval_i(int i) {
+X  Jval j;
+X  j.i = i;
+X  return j;
+}
+X  
+Jval new_jval_l(long l) {
+X  Jval j;
+X  j.l = l;
+X  return j;
+}
+X  
+Jval new_jval_f(float f) {
+X  Jval j;
+X  j.f = f;
+X  return j;
+}
+X  
+Jval new_jval_d(double d) {
+X  Jval j;
+X  j.d = d;
+X  return j;
+}
+X  
+Jval new_jval_v(void *v) {
+X  Jval j;
+X  j.v = v;
+X  return j;
+}
+X  
+Jval new_jval_s(char *s) {
+X  Jval j;
+X  j.s = s;
+X  return j;
+}
+X  
+Jval new_jval_c(char c) {
+X  Jval j;
+X  j.c = c;
+X  return j;
+}
+X  
+Jval new_jval_uc(unsigned char uc) {
+X  Jval j;
+X  j.uc = uc;
+X  return j;
+}
+X  
+Jval new_jval_sh(short sh) {
+X  Jval j;
+X  j.sh = sh;
+X  return j;
+}
+X  
+Jval new_jval_ush(unsigned short ush) {
+X  Jval j;
+X  j.ush = ush;
+X  return j;
+}
+X  
+Jval new_jval_ui(unsigned int i) {
+X  Jval j;
+X  j.i = i;
+X  return j;
+}
+X  
+Jval new_jval_iarray(int i0, int i1) {
+X  Jval j;
+X  j.iarray[0] = i0;
+X  j.iarray[1] = i1;
+X  return j;
+}
+X  
+Jval new_jval_farray(float f0, float f1) {
+X  Jval j;
+X  j.farray[0] = f0;
+X  j.farray[1] = f1;
+X  return j;
+}
+X  
+Jval new_jval_carray_nt(char *carray) {
+X  Jval j;
+X  int i;
+X
+X  for (i = 0; i < 8 && carray[i] != '\0'; i++) {
+X    j.carray[i] = carray[i];
+X  }
+X  if (i < 8) j.carray[i] = carray[i];
+X  return j;
+}
+X  
+Jval new_jval_carray_nnt(char *carray) {
+X  Jval j;
+X
+X  memcpy(j.carray, carray, 8);
+X  return j;
+}
+X
+int jval_i(Jval j) {
+X  return j.i;
+}
+X
+long jval_l(Jval j) {
+X  return j.l;
+}
+X
+float jval_f(Jval j) {
+X  return j.f;
+}
+X
+double jval_d(Jval j) {
+X  return j.d;
+}
+X
+void *jval_v(Jval j) {
+X  return j.v;
+}
+X
+char *jval_s(Jval j) {
+X  return j.s;
+}
+X
+char jval_c(Jval j) {
+X  return j.c;
+}
+X
+unsigned char jval_uc(Jval j) {
+X  return j.uc;
+}
+X
+short jval_sh(Jval j) {
+X  return j.sh;
+}
+X
+unsigned short jval_ush(Jval j) {
+X  return j.ush;
+}
+X
+unsigned int jval_ui(Jval j) {
+X  return j.ui;
+}
+X
+int *jval_iarray(Jval j) {
+X  return j.iarray;
+}
+X
+float *jval_farray(Jval j) {
+X  return j.farray;
+}
+X
+char *jval_carray(Jval j) {
+X  return j.carray;
+}
+X
+SHAR_EOF
+  (set 20 02 09 30 09 25 43 'jval.c'; eval "$shar_touch") &&
+  chmod 0644 'jval.c' ||
+  $echo 'restore of' 'jval.c' 'failed'
+  if ( md5sum --help 2>&1 | grep 'sage: md5sum \[' ) >/dev/null 2>&1 \
+  && ( md5sum --version 2>&1 | grep -v 'textutils 1.12' ) >/dev/null; then
+    md5sum -c << SHAR_EOF >/dev/null 2>&1 \
+    || $echo 'jval.c:' 'MD5 check failed'
+0e8a4f5adbed05d2f1ecb8468caaaa40  jval.c
+SHAR_EOF
+  else
+    shar_count="`LC_ALL= LC_CTYPE= LANG= wc -c < 'jval.c'`"
+    test 3175 -eq "$shar_count" ||
+    $echo 'jval.c:' 'original size' '3175,' 'current size' "$shar_count!"
+  fi
+fi
+# ============= jval.h ==============
+if test -f 'jval.h' && test "$first_param" != -c; then
+  $echo 'x -' SKIPPING 'jval.h' '(file already exists)'
+else
+  $echo 'x -' extracting 'jval.h' '(text)'
+  sed 's/^X//' << 'SHAR_EOF' > 'jval.h' &&
+/*
+Libraries for fields, doubly-linked lists and red-black trees.
+Copyright (C) 2001 James S. Plank
+X
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+X
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+X
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+X
+---------------------------------------------------------------------------
+Please see http://www.cs.utk.edu/~plank/plank/classes/cs360/360/notes/Libfdr/
+for instruction on how to use this library.
+X
+Jim Plank
+plank@cs.utk.edu
+http://www.cs.utk.edu/~plank
+X
+Associate Professor
+Department of Computer Science
+University of Tennessee
+203 Claxton Complex
+1122 Volunteer Blvd.
+Knoxville, TN 37996-3450
+X
+X     865-974-4397
+Fax: 865-974-4404
+X */
+#ifndef	_JVAL_H_
+#define	_JVAL_H_
+X
+/* The Jval -- a type that can hold any 8-byte type */
+X
+typedef union {
+X    int i;
+X    long l;
+X    float f;
+X    double d;
+X    void *v;
+X    char *s;
+X    char c;
+X    unsigned char uc;
+X    short sh;
+X    unsigned short ush;
+X    unsigned int ui;
+X    int iarray[2];
+X    float farray[2];
+X    char carray[8];
+X    unsigned char ucarray[8];
+X  } Jval;  
+X
+extern Jval new_jval_i(int);
+extern Jval new_jval_l(long);
+extern Jval new_jval_f(float);
+extern Jval new_jval_d(double);
+extern Jval new_jval_v(/* void */);
+extern Jval new_jval_s(char *);
+extern Jval new_jval_c(char);
+extern Jval new_jval_uc(unsigned char);
+extern Jval new_jval_sh(short);
+extern Jval new_jval_ush(unsigned short);
+extern Jval new_jval_ui(unsigned int);
+extern Jval new_jval_iarray(int, int);
+extern Jval new_jval_farray(float, float);
+extern Jval new_jval_carray_nt(char *);  /* Carray is null terminated */
+extern Jval new_jval_carray_nnt(char *);  /* Carray is not null terminated */
+X       /* For ucarray -- use carray, because it uses memcpy */
+X
+extern Jval JNULL;
+X
+extern int jval_i(Jval);
+extern long jval_l(Jval);
+extern float jval_f(Jval);
+extern double jval_d(Jval);
+extern void *jval_v(Jval);
+extern char *jval_s(Jval);
+extern char jval_c(Jval);
+extern unsigned char jval_uc(Jval);
+extern short jval_sh(Jval);
+extern unsigned short jval_ush(Jval);
+extern unsigned int jval_ui(Jval);
+extern int *jval_iarray(Jval);
+extern float *jval_farray(Jval);
+extern char *jval_carray(Jval);
+X
+#endif
+SHAR_EOF
+  (set 20 01 01 16 15 58 42 'jval.h'; eval "$shar_touch") &&
+  chmod 0644 'jval.h' ||
+  $echo 'restore of' 'jval.h' 'failed'
+  if ( md5sum --help 2>&1 | grep 'sage: md5sum \[' ) >/dev/null 2>&1 \
+  && ( md5sum --version 2>&1 | grep -v 'textutils 1.12' ) >/dev/null; then
+    md5sum -c << SHAR_EOF >/dev/null 2>&1 \
+    || $echo 'jval.h:' 'MD5 check failed'
+2f402e9c60fa9bdda1f911697250cafc  jval.h
+SHAR_EOF
+  else
+    shar_count="`LC_ALL= LC_CTYPE= LANG= wc -c < 'jval.h'`"
+    test 2735 -eq "$shar_count" ||
+    $echo 'jval.h:' 'original size' '2735,' 'current size' "$shar_count!"
+  fi
+fi
+# ============= LICENSE ==============
+if test -f 'LICENSE' && test "$first_param" != -c; then
+  $echo 'x -' SKIPPING 'LICENSE' '(file already exists)'
+else
+  $echo 'x -' extracting 'LICENSE' '(text)'
+  sed 's/^X//' << 'SHAR_EOF' > 'LICENSE' &&
+Copyright (C) 1991, 1999 Free Software Foundation, Inc.
+59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+Everyone is permitted to copy and distribute verbatim copies
+of this license document, but changing it is not allowed.
+X
+[This is the first released version of the Lesser GPL.  It also counts
+X as the successor of the GNU Library Public License, version 2, hence
+X the version number 2.1.]
+X
+[9]Preamble
+X
+X   The licenses for most software are designed to take away your freedom
+X   to share and change it. By contrast, the GNU General Public Licenses
+X   are intended to guarantee your freedom to share and change free
+X   software--to make sure the software is free for all its users.
+X   
+X   This license, the Lesser General Public License, applies to some
+X   specially designated software packages--typically libraries--of the
+X   Free Software Foundation and other authors who decide to use it. You
+X   can use it too, but we suggest you first think carefully about whether
+X   this license or the ordinary General Public License is the better
+X   strategy to use in any particular case, based on the explanations
+X   below.
+X   
+X   When we speak of free software, we are referring to freedom of use,
+X   not price. Our General Public Licenses are designed to make sure that
+X   you have the freedom to distribute copies of free software (and charge
+X   for this service if you wish); that you receive source code or can get
+X   it if you want it; that you can change the software and use pieces of
+X   it in new free programs; and that you are informed that you can do
+X   these things.
+X   
+X   To protect your rights, we need to make restrictions that forbid
+X   distributors to deny you these rights or to ask you to surrender these
+X   rights. These restrictions translate to certain responsibilities for
+X   you if you distribute copies of the library or if you modify it.
+X   
+X   For example, if you distribute copies of the library, whether gratis
+X   or for a fee, you must give the recipients all the rights that we gave
+X   you. You must make sure that they, too, receive or can get the source
+X   code. If you link other code with the library, you must provide
+X   complete object files to the recipients, so that they can relink them
+X   with the library after making changes to the library and recompiling
+X   it. And you must show them these terms so they know their rights.
+X   
+X   We protect your rights with a two-step method: (1) we copyright the
+X   library, and (2) we offer you this license, which gives you legal
+X   permission to copy, distribute and/or modify the library.
+X   
+X   To protect each distributor, we want to make it very clear that there
+X   is no warranty for the free library. Also, if the library is modified
+X   by someone else and passed on, the recipients should know that what
+X   they have is not the original version, so that the original author's
+X   reputation will not be affected by problems that might be introduced
+X   by others.
+X   
+X   Finally, software patents pose a constant threat to the existence of
+X   any free program. We wish to make sure that a company cannot
+X   effectively restrict the users of a free program by obtaining a
+X   restrictive license from a patent holder. Therefore, we insist that
+X   any patent license obtained for a version of the library must be
+X   consistent with the full freedom of use specified in this license.
+X   
+X   Most GNU software, including some libraries, is covered by the
+X   ordinary GNU General Public License. This license, the GNU Lesser
+X   General Public License, applies to certain designated libraries, and
+X   is quite different from the ordinary General Public License. We use
+X   this license for certain libraries in order to permit linking those
+X   libraries into non-free programs.
+X   
+X   When a program is linked with a library, whether statically or using a
+X   shared library, the combination of the two is legally speaking a
+X   combined work, a derivative of the original library. The ordinary
+X   General Public License therefore permits such linking only if the
+X   entire combination fits its criteria of freedom. The Lesser General
+X   Public License permits more lax criteria for linking other code with
+X   the library.
+X   
+X   We call this license the "Lesser" General Public License because it
+X   does Less to protect the user's freedom than the ordinary General
+X   Public License. It also provides other free software developers Less
+X   of an advantage over competing non-free programs. These disadvantages
+X   are the reason we use the ordinary General Public License for many
+X   libraries. However, the Lesser license provides advantages in certain
+X   special circumstances.
+X   
+X   For example, on rare occasions, there may be a special need to
+X   encourage the widest possible use of a certain library, so that it
+X   becomes a de-facto standard. To achieve this, non-free programs must
+X   be allowed to use the library. A more frequent case is that a free
+X   library does the same job as widely used non-free libraries. In this
+X   case, there is little to gain by limiting the free library to free
+X   software only, so we use the Lesser General Public License.
+X   
+X   In other cases, permission to use a particular library in non-free
+X   programs enables a greater number of people to use a large body of
+X   free software. For example, permission to use the GNU C Library in
+X   non-free programs enables many more people to use the whole GNU
+X   operating system, as well as its variant, the GNU/Linux operating
+X   system.
+X   
+X   Although the Lesser General Public License is Less protective of the
+X   users' freedom, it does ensure that the user of a program that is
+X   linked with the Library has the freedom and the wherewithal to run
+X   that program using a modified version of the Library.
+X   
+X   The precise terms and conditions for copying, distribution and
+X   modification follow. Pay close attention to the difference between a
+X   "work based on the library" and a "work that uses the library". The
+X   former contains code derived from the library, whereas the latter must
+X   be combined with the library in order to run.
+X   
+[10]TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
+X
+X   0. This License Agreement applies to any software library or other
+X   program which contains a notice placed by the copyright holder or
+X   other authorized party saying it may be distributed under the terms of
+X   this Lesser General Public License (also called "this License"). Each
+X   licensee is addressed as "you".
+X   
+X   A "library" means a collection of software functions and/or data
+X   prepared so as to be conveniently linked with application programs
+X   (which use some of those functions and data) to form executables.
+X   
+X   The "Library", below, refers to any such software library or work
+X   which has been distributed under these terms. A "work based on the
+X   Library" means either the Library or any derivative work under
+X   copyright law: that is to say, a work containing the Library or a
+X   portion of it, either verbatim or with modifications and/or translated
+X   straightforwardly into another language. (Hereinafter, translation is
+X   included without limitation in the term "modification".)
+X   
+X   "Source code" for a work means the preferred form of the work for
+X   making modifications to it. For a library, complete source code means
+X   all the source code for all modules it contains, plus any associated
+X   interface definition files, plus the scripts used to control
+X   compilation and installation of the library.
+X   
+X   Activities other than copying, distribution and modification are not
+X   covered by this License; they are outside its scope. The act of
+X   running a program using the Library is not restricted, and output from
+X   such a program is covered only if its contents constitute a work based
+X   on the Library (independent of the use of the Library in a tool for
+X   writing it). Whether that is true depends on what the Library does and
+X   what the program that uses the Library does.
+X   
+X   1. You may copy and distribute verbatim copies of the Library's
+X   complete source code as you receive it, in any medium, provided that
+X   you conspicuously and appropriately publish on each copy an
+X   appropriate copyright notice and disclaimer of warranty; keep intact
+X   all the notices that refer to this License and to the absence of any
+X   warranty; and distribute a copy of this License along with the
+X   Library.
+X   
+X   You may charge a fee for the physical act of transferring a copy, and
+X   you may at your option offer warranty protection in exchange for a
+X   fee.
+X   
+X   2. You may modify your copy or copies of the Library or any portion of
+X   it, thus forming a work based on the Library, and copy and distribute
+X   such modifications or work under the terms of Section 1 above,
+X   provided that you also meet all of these conditions:
+X   
+X     * a) The modified work must itself be a software library.
+X     * b) You must cause the files modified to carry prominent notices
+X       stating that you changed the files and the date of any change.
+X     * c) You must cause the whole of the work to be licensed at no
+X       charge to all third parties under the terms of this License.
+X     * d) If a facility in the modified Library refers to a function or a
+X       table of data to be supplied by an application program that uses
+X       the facility, other than as an argument passed when the facility
+X       is invoked, then you must make a good faith effort to ensure that,
+X       in the event an application does not supply such function or
+X       table, the facility still operates, and performs whatever part of
+X       its purpose remains meaningful.
+X       (For example, a function in a library to compute square roots has
+X       a purpose that is entirely well-defined independent of the
+X       application. Therefore, Subsection 2d requires that any
+X       application-supplied function or table used by this function must
+X       be optional: if the application does not supply it, the square
+X       root function must still compute square roots.)
+X       These requirements apply to the modified work as a whole. If
+X       identifiable sections of that work are not derived from the
+X       Library, and can be reasonably considered independent and separate
+X       works in themselves, then this License, and its terms, do not
+X       apply to those sections when you distribute them as separate
+X       works. But when you distribute the same sections as part of a
+X       whole which is a work based on the Library, the distribution of
+X       the whole must be on the terms of this License, whose permissions
+X       for other licensees extend to the entire whole, and thus to each
+X       and every part regardless of who wrote it.
+X       Thus, it is not the intent of this section to claim rights or
+X       contest your rights to work written entirely by you; rather, the
+X       intent is to exercise the right to control the distribution of
+X       derivative or collective works based on the Library.
+X       In addition, mere aggregation of another work not based on the
+X       Library with the Library (or with a work based on the Library) on
+X       a volume of a storage or distribution medium does not bring the
+X       other work under the scope of this License.
+X       
+X   3. You may opt to apply the terms of the ordinary GNU General Public
+X   License instead of this License to a given copy of the Library. To do
+X   this, you must alter all the notices that refer to this License, so
+X   that they refer to the ordinary GNU General Public License, version 2,
+X   instead of to this License. (If a newer version than version 2 of the
+X   ordinary GNU General Public License has appeared, then you can specify
+X   that version instead if you wish.) Do not make any other change in
+X   these notices.
+X   
+X   Once this change is made in a given copy, it is irreversible for that
+X   copy, so the ordinary GNU General Public License applies to all
+X   subsequent copies and derivative works made from that copy.
+X   
+X   This option is useful when you wish to copy part of the code of the
+X   Library into a program that is not a library.
+X   
+X   4. You may copy and distribute the Library (or a portion or derivative
+X   of it, under Section 2) in object code or executable form under the
+X   terms of Sections 1 and 2 above provided that you accompany it with
+X   the complete corresponding machine-readable source code, which must be
+X   distributed under the terms of Sections 1 and 2 above on a medium
+X   customarily used for software interchange.
+X   
+X   If distribution of object code is made by offering access to copy from
+X   a designated place, then offering equivalent access to copy the source
+X   code from the same place satisfies the requirement to distribute the
+X   source code, even though third parties are not compelled to copy the
+X   source along with the object code.
+X   
+X   5. A program that contains no derivative of any portion of the
+X   Library, but is designed to work with the Library by being compiled or
+X   linked with it, is called a "work that uses the Library". Such a work,
+X   in isolation, is not a derivative work of the Library, and therefore
+X   falls outside the scope of this License.
+X   
+X   However, linking a "work that uses the Library" with the Library
+X   creates an executable that is a derivative of the Library (because it
+X   contains portions of the Library), rather than a "work that uses the
+X   library". The executable is therefore covered by this License. Section
+X   6 states terms for distribution of such executables.
+X   
+X   When a "work that uses the Library" uses material from a header file
+X   that is part of the Library, the object code for the work may be a
+X   derivative work of the Library even though the source code is not.
+X   Whether this is true is especially significant if the work can be
+X   linked without the Library, or if the work is itself a library. The
+X   threshold for this to be true is not precisely defined by law.
+X   
+X   If such an object file uses only numerical parameters, data structure
+X   layouts and accessors, and small macros and small inline functions
+X   (ten lines or less in length), then the use of the object file is
+X   unrestricted, regardless of whether it is legally a derivative work.
+X   (Executables containing this object code plus portions of the Library
+X   will still fall under Section 6.)
+X   
+X   Otherwise, if the work is a derivative of the Library, you may
+X   distribute the object code for the work under the terms of Section 6.
+X   Any executables containing that work also fall under Section 6,
+X   whether or not they are linked directly with the Library itself.
+X   
+X   6. As an exception to the Sections above, you may also combine or link
+X   a "work that uses the Library" with the Library to produce a work
+X   containing portions of the Library, and distribute that work under
+X   terms of your choice, provided that the terms permit modification of
+X   the work for the customer's own use and reverse engineering for
+X   debugging such modifications.
+X   
+X   You must give prominent notice with each copy of the work that the
+X   Library is used in it and that the Library and its use are covered by
+X   this License. You must supply a copy of this License. If the work
+X   during execution displays copyright notices, you must include the
+X   copyright notice for the Library among them, as well as a reference
+X   directing the user to the copy of this License. Also, you must do one
+X   of these things:
+X   
+X     * a) Accompany the work with the complete corresponding
+X       machine-readable source code for the Library including whatever
+X       changes were used in the work (which must be distributed under
+X       Sections 1 and 2 above); and, if the work is an executable linked
+X       with the Library, with the complete machine-readable "work that
+X       uses the Library", as object code and/or source code, so that the
+X       user can modify the Library and then relink to produce a modified
+X       executable containing the modified Library. (It is understood that
+X       the user who changes the contents of definitions files in the
+X       Library will not necessarily be able to recompile the application
+X       to use the modified definitions.)
+X     * b) Use a suitable shared library mechanism for linking with the
+X       Library. A suitable mechanism is one that (1) uses at run time a
+X       copy of the library already present on the user's computer system,
+X       rather than copying library functions into the executable, and (2)
+X       will operate properly with a modified version of the library, if
+X       the user installs one, as long as the modified version is
+X       interface-compatible with the version that the work was made with.
+X     * c) Accompany the work with a written offer, valid for at least
+X       three years, to give the same user the materials specified in
+X       Subsection 6a, above, for a charge no more than the cost of
+X       performing this distribution.
+X     * d) If distribution of the work is made by offering access to copy
+X       from a designated place, offer equivalent access to copy the above
+X       specified materials from the same place.
+X     * e) Verify that the user has already received a copy of these
+X       materials or that you have already sent this user a copy.
+X       
+X   For an executable, the required form of the "work that uses the
+X   Library" must include any data and utility programs needed for
+X   reproducing the executable from it. However, as a special exception,
+X   the materials to be distributed need not include anything that is
+X   normally distributed (in either source or binary form) with the major
+X   components (compiler, kernel, and so on) of the operating system on
+X   which the executable runs, unless that component itself accompanies
+X   the executable.
+X   
+X   It may happen that this requirement contradicts the license
+X   restrictions of other proprietary libraries that do not normally
+X   accompany the operating system. Such a contradiction means you cannot
+X   use both them and the Library together in an executable that you
+X   distribute.
+X   
+X   7. You may place library facilities that are a work based on the
+X   Library side-by-side in a single library together with other library
+X   facilities not covered by this License, and distribute such a combined
+X   library, provided that the separate distribution of the work based on
+X   the Library and of the other library facilities is otherwise
+X   permitted, and provided that you do these two things:
+X   
+X     * a) Accompany the combined library with a copy of the same work
+X       based on the Library, uncombined with any other library
+X       facilities. This must be distributed under the terms of the
+X       Sections above.
+X     * b) Give prominent notice with the combined library of the fact
+X       that part of it is a work based on the Library, and explaining
+X       where to find the accompanying uncombined form of the same work.
+X       
+X   8. You may not copy, modify, sublicense, link with, or distribute the
+X   Library except as expressly provided under this License. Any attempt
+X   otherwise to copy, modify, sublicense, link with, or distribute the
+X   Library is void, and will automatically terminate your rights under
+X   this License. However, parties who have received copies, or rights,
+X   from you under this License will not have their licenses terminated so
+X   long as such parties remain in full compliance.
+X   
+X   9. You are not required to accept this License, since you have not
+X   signed it. However, nothing else grants you permission to modify or
+X   distribute the Library or its derivative works. These actions are
+X   prohibited by law if you do not accept this License. Therefore, by
+X   modifying or distributing the Library (or any work based on the
+X   Library), you indicate your acceptance of this License to do so, and
+X   all its terms and conditions for copying, distributing or modifying
+X   the Library or works based on it.
+X   
+X   10. Each time you redistribute the Library (or any work based on the
+X   Library), the recipient automatically receives a license from the
+X   original licensor to copy, distribute, link with or modify the Library
+X   subject to these terms and conditions. You may not impose any further
+X   restrictions on the recipients' exercise of the rights granted herein.
+X   You are not responsible for enforcing compliance by third parties with
+X   this License.
+X   
+X   11. If, as a consequence of a court judgment or allegation of patent
+X   infringement or for any other reason (not limited to patent issues),
+X   conditions are imposed on you (whether by court order, agreement or
+X   otherwise) that contradict the conditions of this License, they do not
+X   excuse you from the conditions of this License. If you cannot
+X   distribute so as to satisfy simultaneously your obligations under this
+X   License and any other pertinent obligations, then as a consequence you
+X   may not distribute the Library at all. For example, if a patent
+X   license would not permit royalty-free redistribution of the Library by
+X   all those who receive copies directly or indirectly through you, then
+X   the only way you could satisfy both it and this License would be to
+X   refrain entirely from distribution of the Library.
+X   
+X   If any portion of this section is held invalid or unenforceable under
+X   any particular circumstance, the balance of the section is intended to
+X   apply, and the section as a whole is intended to apply in other
+X   circumstances.
+X   
+X   It is not the purpose of this section to induce you to infringe any
+X   patents or other property right claims or to contest validity of any
+X   such claims; this section has the sole purpose of protecting the
+X   integrity of the free software distribution system which is
+X   implemented by public license practices. Many people have made
+X   generous contributions to the wide range of software distributed
+X   through that system in reliance on consistent application of that
+X   system; it is up to the author/donor to decide if he or she is willing
+X   to distribute software through any other system and a licensee cannot
+X   impose that choice.
+X   
+X   This section is intended to make thoroughly clear what is believed to
+X   be a consequence of the rest of this License.
+X   
+X   12. If the distribution and/or use of the Library is restricted in
+X   certain countries either by patents or by copyrighted interfaces, the
+X   original copyright holder who places the Library under this License
+X   may add an explicit geographical distribution limitation excluding
+X   those countries, so that distribution is permitted only in or among
+X   countries not thus excluded. In such case, this License incorporates
+X   the limitation as if written in the body of this License.
+X   
+X   13. The Free Software Foundation may publish revised and/or new
+X   versions of the Lesser General Public License from time to time. Such
+X   new versions will be similar in spirit to the present version, but may
+X   differ in detail to address new problems or concerns.
+X   
+X   Each version is given a distinguishing version number. If the Library
+X   specifies a version number of this License which applies to it and
+X   "any later version", you have the option of following the terms and
+X   conditions either of that version or of any later version published by
+X   the Free Software Foundation. If the Library does not specify a
+X   license version number, you may choose any version ever published by
+X   the Free Software Foundation.
+X   
+X   14. If you wish to incorporate parts of the Library into other free
+X   programs whose distribution conditions are incompatible with these,
+X   write to the author to ask for permission. For software which is
+X   copyrighted by the Free Software Foundation, write to the Free
+X   Software Foundation; we sometimes make exceptions for this. Our
+X   decision will be guided by the two goals of preserving the free status
+X   of all derivatives of our free software and of promoting the sharing
+X   and reuse of software generally.
+X   
+X   NO WARRANTY
+X   
+X   15. BECAUSE THE LIBRARY IS LICENSED FREE OF CHARGE, THERE IS NO
+X   WARRANTY FOR THE LIBRARY, TO THE EXTENT PERMITTED BY APPLICABLE LAW.
+X   EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR
+X   OTHER PARTIES PROVIDE THE LIBRARY "AS IS" WITHOUT WARRANTY OF ANY
+X   KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE
+X   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+X   PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE
+X   LIBRARY IS WITH YOU. SHOULD THE LIBRARY PROVE DEFECTIVE, YOU ASSUME
+X   THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
+X   
+X   16. IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN
+X   WRITING WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY
+X   AND/OR REDISTRIBUTE THE LIBRARY AS PERMITTED ABOVE, BE LIABLE TO YOU
+X   FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR
+X   CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE
+X   LIBRARY (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+X   RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+X   FAILURE OF THE LIBRARY TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+X   SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+X   DAMAGES.
+X   
+END OF TERMS AND CONDITIONS
+X
+[11]How to Apply These Terms to Your New Libraries
+X
+X   If you develop a new library, and you want it to be of the greatest
+X   possible use to the public, we recommend making it free software that
+X   everyone can redistribute and change. You can do so by permitting
+X   redistribution under these terms (or, alternatively, under the terms
+X   of the ordinary General Public License).
+X   
+X   To apply these terms, attach the following notices to the library. It
+X   is safest to attach them to the start of each source file to most
+X   effectively convey the exclusion of warranty; and each file should
+X   have at least the "copyright" line and a pointer to where the full
+X   notice is found.
+X   
+one line to give the library's name and an idea of what it does.
+Copyright (C) year  name of author
+X
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+X
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+X
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+X
+X   Also add information on how to contact you by electronic and paper
+X   mail.
+X   
+X   You should also get your employer (if you work as a programmer) or
+X   your school, if any, to sign a "copyright disclaimer" for the library,
+X   if necessary. Here is a sample; alter the names:
+X   
+Yoyodyne, Inc., hereby disclaims all copyright interest in
+the library `Frob' (a library for tweaking knobs) written
+by James Random Hacker.
+X
+signature of Ty Coon, 1 April 1990
+Ty Coon, President of Vice
+X
+X   That's all there is to it!
+X     _________________________________________________________________
+X   
+X   Return to [12]GNU's home page.
+X   
+X   FSF & GNU inquiries & questions to [13]gnu@gnu.org. Other [14]ways to
+X   contact the FSF.
+X   
+X   Comments on these web pages to [15]webmasters@www.gnu.org, send other
+X   questions to [16]gnu@gnu.org.
+X   
+X   Copyright notice above.
+X   Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
+X   MA 02111, USA
+X   
+X   Updated: 7 Jan 2000 rms
+X     _________________________________________________________________
+X
+References
+X
+X   1. http://www.gnu.org/graphics/philosophicalgnu.html
+X   2. http://www.gnu.org/copyleft/copyleft.html#translationsLGPL
+X   3. http://www.gnu.org/philosophy/why-not-lgpl.html
+X   4. http://www.gnu.org/copyleft/lesser.html#SEC1
+X   5. http://www.gnu.org/copyleft/lesser.html#SEC2
+X   6. http://www.gnu.org/copyleft/lesser.html#SEC3
+X   7. http://www.gnu.org/copyleft/lesser.html#SEC4
+X   8. http://www.gnu.org/copyleft/lesser.html#TOC1
+X   9. http://www.gnu.org/copyleft/lesser.html#TOC2
+X  10. http://www.gnu.org/copyleft/lesser.html#TOC3
+X  11. http://www.gnu.org/copyleft/lesser.html#TOC4
+X  12. http://www.gnu.org/home.html
+X  13. mailto:gnu@gnu.org
+X  14. http://www.gnu.org/home.html#ContactInfo
+X  15. mailto:webmasters@www.gnu.org
+X  16. mailto:gnu@gnu.org
+SHAR_EOF
+  (set 20 01 01 16 15 53 50 'LICENSE'; eval "$shar_touch") &&
+  chmod 0644 'LICENSE' ||
+  $echo 'restore of' 'LICENSE' 'failed'
+  if ( md5sum --help 2>&1 | grep 'sage: md5sum \[' ) >/dev/null 2>&1 \
+  && ( md5sum --version 2>&1 | grep -v 'textutils 1.12' ) >/dev/null; then
+    md5sum -c << SHAR_EOF >/dev/null 2>&1 \
+    || $echo 'LICENSE:' 'MD5 check failed'
+c99b5156d2f2badddd962c51fd6440a6  LICENSE
+SHAR_EOF
+  else
+    shar_count="`LC_ALL= LC_CTYPE= LANG= wc -c < 'LICENSE'`"
+    test 28760 -eq "$shar_count" ||
+    $echo 'LICENSE:' 'original size' '28760,' 'current size' "$shar_count!"
+  fi
+fi
+# ============= makefile ==============
+if test -f 'makefile' && test "$first_param" != -c; then
+  $echo 'x -' SKIPPING 'makefile' '(file already exists)'
+else
+  $echo 'x -' extracting 'makefile' '(text)'
+  sed 's/^X//' << 'SHAR_EOF' > 'makefile' &&
+# Libraries for fields, doubly-linked lists and red-black trees.
+# Copyright (C) 2001 James S. Plank
+# 
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+# 
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+# 
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+# 
+# ---------------------------------------------------------------------------
+# Please see http://www.cs.utk.edu/~plank/plank/classes/cs360/360/notes/Libfdr/
+# for instruction on how to use this library.
+# 
+# Jim Plank
+# plank@cs.utk.edu
+# http://www.cs.utk.edu/~plank
+# 
+# Associate Professor
+# Department of Computer Science
+# University of Tennessee
+# 203 Claxton Complex
+# 1122 Volunteer Blvd.
+# Knoxville, TN 37996-3450
+# 
+#      865-974-4397
+# Fax: 865-974-4404
+X
+X
+CFLAGS = -O
+X
+all: libfdr.a
+X
+OBJS = dllist.o fields.o jval.o jrb.o
+X
+libfdr.a: $(OBJS)
+X	ar ru libfdr.a $(OBJS)
+X	ranlib libfdr.a 
+X
+clean:
+X	rm -f core *.o libfdr.a
+X
+X.SUFFIXES: .c .o
+X.c.o:
+X	$(CC) $(CFLAGS) -c $*.c
+X
+SHAR_EOF
+  (set 20 01 01 16 15 59 06 'makefile'; eval "$shar_touch") &&
+  chmod 0644 'makefile' ||
+  $echo 'restore of' 'makefile' 'failed'
+  if ( md5sum --help 2>&1 | grep 'sage: md5sum \[' ) >/dev/null 2>&1 \
+  && ( md5sum --version 2>&1 | grep -v 'textutils 1.12' ) >/dev/null; then
+    md5sum -c << SHAR_EOF >/dev/null 2>&1 \
+    || $echo 'makefile:' 'MD5 check failed'
+e15bd2efb646230f18d28c8ab4ddf12c  makefile
+SHAR_EOF
+  else
+    shar_count="`LC_ALL= LC_CTYPE= LANG= wc -c < 'makefile'`"
+    test 1512 -eq "$shar_count" ||
+    $echo 'makefile:' 'original size' '1512,' 'current size' "$shar_count!"
+  fi
+fi
+# ============= README ==============
+if test -f 'README' && test "$first_param" != -c; then
+  $echo 'x -' SKIPPING 'README' '(file already exists)'
+else
+  $echo 'x -' extracting 'README' '(text)'
+  sed 's/^X//' << 'SHAR_EOF' > 'README' &&
+Libraries for fields, doubly-linked lists and red-black trees.
+Copyright (C) 2001 James S. Plank
+X
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+X
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+X
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+X
+---------------------------------------------------------------------------
+Please see http://www.cs.utk.edu/~plank/plank/classes/cs360/360/notes/Libfdr/
+for instruction on how to use this library.
+X
+Jim Plank
+plank@cs.utk.edu
+http://www.cs.utk.edu/~plank
+X
+Associate Professor
+Department of Computer Science
+University of Tennessee
+203 Claxton Complex
+1122 Volunteer Blvd.
+Knoxville, TN 37996-3450
+X
+X     865-974-4397
+Fax: 865-974-4404
+SHAR_EOF
+  (set 20 02 09 30 09 26 20 'README'; eval "$shar_touch") &&
+  chmod 0644 'README' ||
+  $echo 'restore of' 'README' 'failed'
+  if ( md5sum --help 2>&1 | grep 'sage: md5sum \[' ) >/dev/null 2>&1 \
+  && ( md5sum --version 2>&1 | grep -v 'textutils 1.12' ) >/dev/null; then
+    md5sum -c << SHAR_EOF >/dev/null 2>&1 \
+    || $echo 'README:' 'MD5 check failed'
+569e2a0aeb5c5fce7c4aa281155ae26c  README
+SHAR_EOF
+  else
+    shar_count="`LC_ALL= LC_CTYPE= LANG= wc -c < 'README'`"
+    test 1232 -eq "$shar_count" ||
+    $echo 'README:' 'original size' '1232,' 'current size' "$shar_count!"
+  fi
+fi
+rm -fr _sh25846
+exit 0

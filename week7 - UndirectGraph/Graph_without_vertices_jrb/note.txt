@@ -1,0 +1,13 @@
+- use symbol table to represent visited[] array
+	+ include symtab.h, define (*makeNode) and (*compare) 
+	outside symtab
+
+- (int*)jval_v(node->key) not convert to int*
+==> instead, use int k = jval_i(node->key);
+				 then pass &k to the function
+
+- It's neccessary to add 1 egde 2 times. For example, add (0,1) and (1,0)
+
+- Want to reassign a pointer, use pointer to pointer
+
+- Forget about Symboltable, jrb is easier to implement
